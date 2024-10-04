@@ -1,0 +1,45 @@
+Installing Jenkins on AWS EC2 Instance:Amazon Linux 2 Kernel 5.10 AMI 2.0.20230307.0 x86_64 HVM gp2
+
+
+Installing Java:
+================================
+amazon-linux-extras enable java-openjdk11
+yum clean metadata 
+yum install java-11-openjdk
+alternatives --config java (To know various installed versions)--->Copy the path in notepad
+          press 1 for selection
+vim /etc/profile  (To set class path)
+  		export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-11.0.16.0.8-1.amzn2.0.1.x86_64
+  		export PATH=$JAVA_HOME/bin:$PATH
+
+source /etc/profile (To update path which we specified)
+echo $JAVA_HOME (To check path has been set properly /not)
+
+
+
+INSTALL Maven
+==========================
+
+yum install maven -y
+mvn --version (copy path of maven)
+vim /etc/profile
+   export MAVEN_HOME=/usr/share/maven
+source /etc/profile (To update path which we specified)
+echo $MAVEN_HOME (To check path has been set properly /not)
+
+
+Installing Jenkins
+========================================
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+sudo yum install jenkins -y
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
+
+
+
+
+
+copy the jenkins url yin notepad 
+		Jenkins URL:   http://13.233.124.238:8080/  [note: 13.233.124.238 is  public IP od ec2 server.pls copy your public ip]

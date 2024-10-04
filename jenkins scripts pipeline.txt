@@ -1,0 +1,378 @@
+pipeline{
+agent any
+stages{
+ stage('One')
+ {
+ steps{
+ echo "Hello"
+ }
+ }
+ stage('evaluate branch')
+ {
+ when{
+ branch "master"
+ }
+ steps{
+ echo "world"
+ echo "Ram"
+ }
+ }
+ }
+ }
+
+
+
+script if else pipeline:
+pipeline {
+    
+    agent any
+    
+    parameters {
+        booleanParam(name: "RELEASE", defaultValue: false)
+    }
+    
+    stages {
+
+        stage("Build") {
+            steps {
+                echo "build code"
+            }
+        }
+        
+        stage("Publish") {
+            steps {
+                script {
+                    if (params.RELEASE) {
+                        echo "deploying"
+                    } else {
+                        echo "no deployment"
+                    }
+                }
+            }
+        }
+    }
+}
+
+if else parrel pipeline:
+
+-------------------------------
+pipeline {
+    
+    agent any
+    
+    parameters {
+        booleanParam(name: "RELEASE", defaultValue: false)
+    }
+    
+    stages {
+
+        stage("Build") {
+            steps {
+                echo "Build code"
+            }
+        }
+------------------------------------------
+switch pipeline:
+
+pipeline {
+    
+    agent any
+    
+    parameters {
+        booleanParam(name: "RELEASE", defaultValue: false)
+        choice(name: "DEPLOY_TO", choices: ["", "INT", "PRE", "PROD"])
+    }
+    
+    stages {
+
+        stage("Build") {
+            steps {
+                echo "build code"
+            }
+        }
+        
+        stage("Publish") {
+            parallel {
+                stage('Pre-Release') {
+                    when { expression { !params.RELEASE } }
+                    steps {
+                        echo "pre-release"
+                    }
+                }
+                stage("Release") {
+                    when { expression { params.RELEASE } }
+                    steps {
+                        echo "Release"
+                    }
+                }
+            }
+        }
+
+        stage("Deploy") {
+            parallel {
+                stage("INT") {
+                    when { expression { params.DEPLOY_TO == "INT" } }
+                    steps {
+                        echo "Integration"
+                    }
+                }
+                stage("PRE") {
+                    when { expression { params.DEPLOY_TO == "PRE" } }
+                    steps {
+                        echo "pre-prod"
+                    }
+                }
+                stage("PROD") {
+                    when { expression { params.DEPLOY_TO == "PROD" } }
+                    steps {
+                        echo "production"
+                    }
+                }
+            }
+        }
+    }
+}
+
+Master slave setup:
+--------------------------------------
+
+Master and slave set up:
+
+1. Master machine and change the Jenkisn URL in Jenkins configure system section
+
+Manage Jenkins --> configure system --> scroll down --> Jenkins Location-->give the latest Jenkins URL ==> save it
+
+update the latest URL over there
+
+
+2. For master and slave to communicate , you will need Agent port
+
+By default it is disabled in jenkins. You need to enable it
+
+Manage Jenkins --> Configure global security --> scroll down to Agent section ==> select random ==> save it
+
+
+Slave set up:
+***********************
+
+Install the following tools:
+
+Git installation:
+
+yum install git -y
+
+
+JAVA Installation
+
+ yum install java-1.8.0-openjdk-devel
+
+Maven Installation:
+***************
+yum install maven -y
+
+
+Create the root directory/workspace on the slave for master to place the rmeote files and output files
+*******************************
+cd /tmp
+
+mkdir jenkinsdir
+
+We need to give permission to this directory, so that master can read and write int this directory
+
+ chmod -R 777 /tmp/jenkinsdir
+
+This is the path of directory
+
+/tmp/jenkinsdir
+
+
+******************************************
+
+Connect Master to the Slave
+
+*****************************************
+
+Manage jenkins--> Manage nodes & clouds --> on left side click on New node
+
+Give name as Jnekinsslave --> select permanent agent --> click on create
+
+
+Name: already populated
+
+Description: Slave is of Lunix OS
+
+Number of executors: 1
+
+here executors means, jobs that can be executed on the slave at a time
+
+Remote root directory: /tmp/jenkinsdir
+
+Label: jenkinsSlave
+
+Usage: Only build jobs with label expression matching this node
+
+Launch method:
+
+how do you want to connect slave to master
+
+1. Launch method : select==> launch agents via ssh
+
+Host : private ip address of slave
+
+Credentials:
+Click on Add button --> click on jenkins button
+
+Kind: SSH username with private key
+
+id: jenkisnslave
+
+description: slave credentials
+
+Username: ec2-user
+
+Private Key :  click on Enter directly ==> click on add button
+
+Open the pem file of slave server using notepad in your downloads folder
+
+and copy all the contents ==> CTL A + CTL C
+
+and paste it under private key step
+
+Click on add button
+
+
+In credentials drop down select the credentials
+
+
+Host Key Verification Strategy
+
+> select Non verifying verification strategy
+
+Availability : keep this node online as much as psosible
+
+Tool location
+********************
+
+Location of tool git and java on the slave
+
+git :  /usr/bin/git
+
+java: /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.332.b09-1.amzn2.0.2.x86_64x`
+        
+        stage("Publish") {
+            parallel {
+                stage("Release") {
+                    when { expression { params.RELEASE } }
+                    steps {
+                        echo "deploying"
+                    }
+                }
+                stage('Pre-Release') {
+                    when { expression { !params.RELEASE } }
+                    steps {
+                        echo "pre-release"
+                    }
+                }
+            }
+        }
+    }
+}
+
+***********************************
+
+Creation of new User
+*************
+
+Jenkins--> Manage Jenkins--> Create/Add Users ----> left side ---> add User
+Add Name as DEV-->Last name -->Password--> Confirm Password--> Email --> submit
+
+New user created.
+
+*****************
+MANAGE AUTHORIZATION
+
+Matrix based Security
+
+ Goto MangeJenkins--->Global security --> Authorization Section---> select Matrix based Security
+ ---> Click on Add Users --> write admin---> give adminsitation access
+----> click on ADD --> write dev--> give Read access and job read access
+--> logout as admin -- login as Dev --> no jobs, only read access
+--> logout as Dev ---> login as Admin
+
+Project based Matrix Security
+
+ Goto MangeJenkins--->Global security --> Authorization Section---> Select Project based Matrix Security
+-->   Click on Add Users --> write admin---> give adminsitation access
+----> click on ADD --> write dev--> give Read access 
+--> go to Job1 --> configure--> general --> Check Enable project based security
+--> Add user as Dev --> give him access to read, build, write, workspace, build
+
+--> go to Job1 --> configure--> general --> Check Enable project based security
+--> Add user as Dev --> give him access to read
+
+Save file
+
+Logout as admin--> login as Dev --> you will see both the jobs , job2 will be only read access.
+
+Logout as dev and login as Admin
+
+**************************************
+
+Shared Library notes:
+Jenkins --> Shared Library
+
+It is a concept of having common jenkins code in the GITHUB. this code can be used any number of
+times in your pipeline just by refering to it
+
+Shared library repo
+
+https://github.com/Sonal0409/shared-library.git
+
+Pipeline:
+
+
+#!/usr/bin/env groovy
+
+@Library('shared-library@master') _ //master or whatever branch
+
+pipeline{
+
+      agent any
+        
+        stages{
+
+              stage('maven build'){
+                  steps{
+                      script{
+                                git 'https://github.com/Sonal0409/sample-web-application.git'
+		    	                sh "mvn clean install"
+                      	  }
+               	     }  
+                 }	
+                 
+                 stage ('Check logs') {
+                    steps {
+                        filterLogs ('WARNING', 1)
+                    }
+                }
+		
+           }	       	     	         
+}
+
+
+Note: go to manage jenins--> configure system --> global pipelines libraries --> add git repo details
+
+
+
+Link for learning pipeline and groovy code:
+
+http://18.221.116.221:8080/plugin/job-dsl/api-viewer/index.html#path/multibranchPipelineJob
+
+https://www.jenkins.io/doc/pipeline/steps/
+
+ 
+ 
+ 
+ 
+ 
+ 
